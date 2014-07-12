@@ -18,8 +18,8 @@ $IPTABLES -Z
 
 
 #SETTING UP DEFAULT POLICIES
-$IPTABLES -P INPUT  DROP
-$IPTABLES -P OUTPUT  DROP
+$IPTABLES -P INPUT DROP
+$IPTABLES -P OUTPUT DROP
 $IPTABLES -P FORWARD DROP
 $IPTABLES -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
@@ -27,21 +27,14 @@ $IPTABLES -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 $IPTABLES -A INPUT -i lo -j ACCEPT -m comment --comment "allow loopback"
 $IPTABLES -A OUTPUT -o lo -j ACCEPT -m comment --comment "allow loopback"
 
-#RETRIEVING WHITLISTED IP's
-#for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
-#    echo "permitting $x"
-#    $IPTABLES -A INPUT -t filter  --source $x -j ACCEPT
-#done
-
-#RETRIEVING BLACKLISTED IP's
-#for x in `grep -v ^ ^# $BLACKLIST | awk '{print $1}'`; do
-#    echo "denying $x"
-#    $IPTABLES -A INPUT -t filter --source $x -j DROP
-#done
 for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
 echo "Permitting $x..."
-$IPTABLES -A INPUT -s $x -j ACCEPT
+$IPTABLES -A INPUT --source $x -j ACCEPT
 done
+
+#
+## Blacklist
+#
 
 for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
 echo "Denying $x..."

@@ -101,4 +101,4 @@ $IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 #
 ## Save the rules so they are persistent on reboot.
 #
-$TPTABLES_SAVE > /etc/iptables/rules.v4
+$TPTABLES_SAVE > /etc/ipatables/rules.v4
