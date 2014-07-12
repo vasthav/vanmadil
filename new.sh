@@ -51,5 +51,5 @@ $IPTABLES -A INPUT -p tcp --syn -j DROP
 #$IPTABLES -A OUTPUT -m state --state RELATED,ESTABLISHED,NEW -j ACCEPT
 #iptables -A OUTPUT -j DROP
 iptables-save > /etc/iptables/rules.v4
-clear
+#clear
 iptables -vnL --line-number

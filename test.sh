@@ -1,55 +1,70 @@
 #!/bin/bash
+# THE GREAT WALL
+# PROGRAMMER->KC
+
+#initializing
+IPTABLES=/sbin/iptables
 WHITELIST=/usr/local/etc/whitelist.txt
 BLACKLIST=/usr/local/etc/blacklist.txt
-ALLOWED="22 25 53 80 443 465 587 993"
-IPTABLES=/sbin/iptables
-IPTABLES_SAVE=/sbin/iptables-save
-iptables-save > /usr/local/etc/iptables.last
-#iptables -P INPUT ACCEPT
-echo 'Setting default INPUT policy to ACCEPT'
+INPUT_TCP="22 80 443 10000"
+INPUT_UDP=""
 
+
+#FLUSHING
+#$IPTABLES -P INPUT ACCEPT
 $IPTABLES -F
-echo 'Clearing Tables F'
 $IPTABLES -X
-echo 'Clearing Tables X'
 $IPTABLES -Z
-echo 'Clearing Tables Z'
-#echo 'Allowing Localhost'
-#$IPTABLES -A INPUT -s 127.0.0.1 -j ACCEPT
 
-## Whitelist
+
+#SETTING UP DEFAULT POLICIES
+$IPTABLES -P INPUT  DROP
+$IPTABLES -P OUTPUT  DROP
+$IPTABLES -P FORWARD DROP
+$IPTABLES -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+#ALLOWING LOOPBACK
+$IPTABLES -A INPUT -i lo -j ACCEPT -m comment --comment "allow loopback"
+$IPTABLES -A OUTPUT -o lo -j ACCEPT -m comment --comment "allow loopback"
+
+#RETRIEVING WHITLISTED IP's
+#for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
+#    echo "permitting $x"
+#    $IPTABLES -A INPUT -t filter  --source $x -j ACCEPT
+#done
+
+#RETRIEVING BLACKLISTED IP's
+#for x in `grep -v ^ ^# $BLACKLIST | awk '{print $1}'`; do
+#    echo "denying $x"
+#    $IPTABLES -A INPUT -t filter --source $x -j DROP
+#done
 for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
 echo "Permitting $x..."
 $IPTABLES -A INPUT -s $x -j ACCEPT
 done
 
-#for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
-#echo "Permitting $x..."
-#$IPTABLES -A INPUT -d $x -p tcp -m multiport --dports 22,25,53,80,443,465,587,993 -j ACCEPT
-#done
-
-## Blacklist
-#for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
-#echo "Denying $x..."
-#$IPTABLES -A INPUT -s $x -j DROP
-#done
-
-## Permitted Ports
-for port in $ALLOWED; do
-echo "Accepting port TCP $port..."
-$IPTABLES -A INPUT -p tcp --dport $port -j ACCEPT
+for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
+echo "Denying $x..."
+$IPTABLES -A INPUT -s $x -j DROP
 done
 
-for port in $ALLOWED; do
-echo "Accepting port UDP $port..."
-$IPTABLES -A INPUT -p udp --dport $port -j ACCEPT
+#ALLOWING PORTS
+for port in $INPUT_TCP; do
+    echo "accepting port TCP $port"
+    $IPTABLES -A INPUT -t filter -p tcp --dport $port -j ACCEPT
 done
 
-$IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-$IPTABLES -A INPUT -p udp -j DROP
-$IPTABLES -A INPUT -p tcp --syn -j DROP
-#$IPTABLES -A OUTPUT -m state --state RELATED,ESTABLISHED,NEW -j ACCEPT
-#iptables -A OUTPUT -j DROP
-iptables-save > /etc/iptables/rules.v4
-clear
-iptables -vnL --line-number
+for port in $INPUT_UDP; do
+    echo "accepting port TCP $port"
+    $IPTABLES -A INPUT -t filter -p udp --dport $port -j ACCEPT
+done
+
+ ## Drop and log the rest
+    $IPTABLES -A INPUT -j LOG --log-prefix "INPUT DROP: " -m limit --limit 10/minute --limit-burst 10
+    $IPTABLES -A INPUT -j DROP
+
+## Output accept everything but 'invalid' packets
+    $IPTABLES -A OUTPUT -m state --state NEW -j ACCEPT
+    $IPTABLES -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    $IPTABLES -A OUTPUT -j LOG --log-prefix "OUTPUT DROP: "
+    $IPTABLES -A OUTPUT -j DROP
