@@ -29,7 +29,7 @@ $IPTABLES -A OUTPUT -o lo -j ACCEPT -m comment --comment "allow loopback"
 
 for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
 echo "Permitting $x..."
-$IPTABLES -A INPUT --source $x -j ACCEPT
+$IPTABLES -A INPUT -s $x -j ACCEPT
 done
 
 #
