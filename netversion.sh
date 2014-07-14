@@ -44,6 +44,11 @@ $IPTABLES -X
 echo 'Clearing Tables X'
 $IPTABLES -Z
 echo 'Clearing Tables Z'
+$IPTABLES -F -t nat
+echo 'Clearing Tables X'
+$IPTABLES -F -t mangle
+echo 'Clearing Tables Z'
+
 
 #Always allow localhost.
 echo 'Allowing Localhost'
@@ -55,7 +60,7 @@ $IPTABLES -A INPUT -s 127.0.0.1 -j ACCEPT
 
 for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
 echo "Permitting $x..."
-$IPTABLES -A INPUT -s $x -j ACCEPT
+$IPTABLES -A INPUT -t filter -s $x -j ACCEPT
 done
 
 #
@@ -64,7 +69,7 @@ done
 
 for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
 echo "Denying $x..."
-$IPTABLES -A INPUT -s $x -j DROP
+$IPTABLES -A INPUT -t filter -s $x -j DROP
 done
 
 #
@@ -101,4 +106,4 @@ $IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 #
 ## Save the rules so they are persistent on reboot.
 #
-$TPTABLES_SAVE > /etc/ipatables/rules.v4
+$TPTABLES_SAVE > /etc/iptables/rules.v4

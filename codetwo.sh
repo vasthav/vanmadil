@@ -34,14 +34,14 @@ echo 'Clearing Tables Z'
 
 for x in `grep -v ^# $WHITELIST | awk '{print $1}'`; do
 echo "Permitting $x..."
-$IPTABLES -A OUTPUT -d $x -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT
+$IPTABLES -A INPUT -s $x -m state --state RELATED,ESTABLISHED -j ACCEPT
 done
 
 ## Blacklist
-#for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
-#echo "Denying $x..."
-#$IPTABLES -A INPUT -s $x -j DROP
-#done
+for x in `grep -v ^# $BLACKLIST | awk '{print $1}'`; do
+echo "Denying $x..."
+$IPTABLES -A INPUT -s $x -j DROP
+done
 
 ## Permitted Ports
 for port in $ALLOWED; do
@@ -54,13 +54,12 @@ echo "Accepting port UDP $port..."
 $IPTABLES -A INPUT -p udp --dport $port -j ACCEPT
 done
 
-$IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+#$IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 #$IPTABLES -A OUTPUT -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT
 $IPTABLES -A INPUT -p udp -j DROP
 $IPTABLES -A INPUT -p tcp --syn -j DROP
+$IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 $IPTABLES -A INPUT -j DROP
-$IPTABLES -A OUTPUT -j DROP
-
+#$IPTABLES -A OUTPUT -j DROP
 iptables-save > /etc/iptables/rules.v4
-#clear
 iptables -vnL --line-number
